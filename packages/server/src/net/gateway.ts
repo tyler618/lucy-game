@@ -153,6 +153,11 @@ export class Gateway {
             handle: entry.handle,
             currency: entry.currency,
             stake: entry.stake,
+            // Formatted here rather than in the client: the server owns the
+            // currency's decimals, and a raw minor-unit count in the feed
+            // reads as "2500000000" instead of "25.00 USDT".
+            stakeDisplay: entry.stakeDisplay,
+            simulated: entry.simulated,
             markedAt: entry.carry === null ? null : entry.at,
             cashedCarry: entry.carry,
             payout: entry.payout,

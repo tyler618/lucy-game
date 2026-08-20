@@ -39,6 +39,10 @@ export interface PublicBet {
   currency: string;
   /** Exact minor-unit string. bigint does not survive JSON. */
   stake: string;
+  /** Server-formatted for display, so the client never guesses at decimals. */
+  stakeDisplay?: string;
+  /** Demo-table simulation. Always surfaced, never suppressible from config. */
+  simulated?: boolean;
   /** Set once the player marks it. */
   markedAt: number | null;
   cashedCarry: number | null;

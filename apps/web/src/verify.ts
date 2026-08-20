@@ -116,10 +116,18 @@ for (const id of ['#serverSeed', '#clientSeed', '#nonce', '#expectHash']) {
   });
 }
 
-/* A worked example, so the page is useful before you have played a hole. */
+/*
+ * A worked example, so the page is useful before you have played a hole.
+ * The nonce is chosen to land on a real carry rather than an instant bust — a
+ * verifier whose first impression is "1.00x" reads as a broken page — and the
+ * published hash is prefilled so the commitment check shows its passing state.
+ */
 if (!params.has('serverSeed')) {
-  $<HTMLInputElement>('#serverSeed').value = 'a'.repeat(64);
+  const exampleSeed = 'a'.repeat(64);
+  $<HTMLInputElement>('#serverSeed').value = exampleSeed;
   $<HTMLInputElement>('#clientSeed').value = 'ace-example';
+  $<HTMLInputElement>('#nonce').value = '5';
+  $<HTMLInputElement>('#expectHash').value = hashServerSeed(exampleSeed);
   run();
 }
 

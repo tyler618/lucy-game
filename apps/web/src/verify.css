@@ -10,7 +10,18 @@ body.verify {
   margin: 0 auto;
   padding: calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
   display: grid;
+  /*
+   * minmax(0, 1fr), not 1fr. A grid child's default min-width is `auto`, which
+   * an <input> resolves to its intrinsic content width — so a 64-character
+   * server seed made the whole document wider than the phone.
+   */
+  grid-template-columns: minmax(0, 1fr);
   gap: 16px;
+}
+
+.v-card,
+.v-card > * {
+  min-width: 0;
 }
 
 .v-head {
@@ -98,6 +109,7 @@ body.verify {
   font-size: 12px;
   padding: 8px;
   border-radius: 8px;
+  word-break: break-all;
 }
 
 .v-commit[data-ok='true'] {

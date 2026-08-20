@@ -286,7 +286,7 @@ function advanceAuto(won: boolean, payout: bigint): void {
   auto = advanceAutobet(auto, autoConfig, { won, profit: payout - lastStake }, balance);
   const sign = auto.netProfit >= 0n ? '+' : '';
   $('#auto-status').textContent = auto.running
-    ? `Hole ${auto.roundsPlayed} · ${sign}${toExactString(auto.netProfit, currency)} · next ${toExactString(auto.nextStake, currency)}`
+    ? `Hole ${auto.roundsPlayed} · ${sign}${format(auto.netProfit, currency)} · next ${format(auto.nextStake, currency)}`
     : `Autobet stopped — ${(auto.stopReason ?? '').replace(/_/g, ' ')}`;
 
   if (auto.running) {
@@ -444,7 +444,9 @@ window.setInterval(() => {
   $('#session-clock').textContent = `${Math.floor(secs / 60)}:${String(secs % 60).padStart(2, '0')}`;
   const net = BigInt(session.netPosition);
   const el = $('#session-net');
-  el.textContent = toExactString(net, currency);
+  // Display precision, not storage precision. A USDT net of zero should read
+  // "0.00", not "0.00000000".
+  el.textContent = `${net > 0n ? '+' : ''}${format(net, currency)}`;
   el.dataset.sign = net > 0n ? 'up' : net < 0n ? 'down' : '';
 }, 1000);
 

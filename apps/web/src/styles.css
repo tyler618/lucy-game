@@ -454,7 +454,13 @@ body {
   align-items: stretch;
 }
 
+/*
+ * Scoped to the row as well as the field: the verifier's nonce-range row is a
+ * bare .field__row with no .field wrapper, so a `.field input` rule left those
+ * inputs at their intrinsic width and pushed the page sideways.
+ */
 .field input,
+.field__row input,
 .balance select {
   flex: 1;
   min-width: 0;
