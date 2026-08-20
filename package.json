@@ -18,7 +18,7 @@
     "dev:server": "npm run dev -w @ace/server",
     "sim": "npm run build -w @ace/core && node packages/core/sim/run.js",
     "sim:quick": "npm run build -w @ace/core && node packages/core/sim/run.js --rounds 1000000 --no-write",
-    "typecheck": "tsc --noEmit -p packages/core/tsconfig.json && tsc --noEmit -p packages/server/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json && tsc --noEmit -p api/tsconfig.json",
+    "typecheck": "npm run build -w @ace/core && npm run build -w @ace/server && tsc --noEmit -p apps/web/tsconfig.json && tsc --noEmit -p api/tsconfig.json",
     "test": "npm run test -w @ace/core",
     "build:vercel": "node scripts/fetch-assets.mjs && npm run build -w @ace/core && npm run build -w @ace/server && npm run build -w @ace/web"
   },
