@@ -4,6 +4,14 @@ name: Ingest generated art
 # from the generator's CDN into the repo, and how a revised asset is pulled in
 # later: update assets/manifest.json, run this, review the diff.
 on:
+  # A manifest change is a request to re-ingest, so it triggers directly.
+  # workflow_dispatch only becomes available once this file reaches the default
+  # branch, which is why the push trigger is the primary one.
+  push:
+    paths:
+      - 'assets/manifest.json'
+      - 'scripts/fetch-assets.mjs'
+      - '.github/workflows/ingest-assets.yml'
   workflow_dispatch:
     inputs:
       force:
