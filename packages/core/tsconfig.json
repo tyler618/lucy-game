@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "outDir": "dist",
+    "composite": true,
+    "rootDir": "src",
+    "moduleResolution": "Bundler",
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts"]
+}

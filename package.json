@@ -1,0 +1,30 @@
+{
+  "name": "ace",
+  "private": true,
+  "version": "1.0.0",
+  "description": "ACE \u2014 a golf-themed provably fair crash original for real-money crypto casinos.",
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "npm run build -w @ace/core && npm run build -w @ace/server && npm run build -w @ace/web",
+    "build:web": "npm run build -w @ace/core && npm run build -w @ace/web",
+    "dev": "npm run dev -w @ace/web",
+    "dev:server": "npm run dev -w @ace/server",
+    "sim": "npm run build -w @ace/core && node packages/core/sim/run.js",
+    "sim:quick": "npm run build -w @ace/core && node packages/core/sim/run.js --rounds 1000000 --no-write",
+    "typecheck": "tsc --noEmit -p packages/core/tsconfig.json && tsc --noEmit -p packages/server/tsconfig.json && tsc --noEmit -p apps/web/tsconfig.json && tsc --noEmit -p api/tsconfig.json",
+    "test": "npm run test -w @ace/core",
+    "build:vercel": "node scripts/fetch-assets.mjs && npm run build -w @ace/core && npm run build -w @ace/server && npm run build -w @ace/web"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.1",
+    "typescript": "^5.9.3",
+    "sharp": "^0.33.5"
+  }
+}

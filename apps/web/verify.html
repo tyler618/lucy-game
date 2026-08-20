@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#0E1210" />
+    <title>ACE — Verify any hole</title>
+    <meta
+      name="description"
+      content="Independently verify any ACE hole from its seed triplet. Runs entirely in your browser."
+    />
+    <link rel="icon" href="/assets/art/emblem.svg" type="image/svg+xml" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=JetBrains+Mono:wght@400;600;800&display=swap"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+    <link rel="stylesheet" href="/src/verify.css" />
+  </head>
+  <body class="verify">
+    <main class="v-wrap">
+      <header class="v-head">
+        <a class="v-back" href="/">← Table</a>
+        <h1 class="wordmark">ACE</h1>
+        <p class="v-sub mono">Provably fair verifier</p>
+      </header>
+
+      <p class="v-intro">
+        This page computes the carry for any ACE hole from its seed triplet. It runs entirely in
+        your browser — open the network tab and watch: after the page loads, it talks to nothing.
+        Save it and it still works offline.
+      </p>
+
+      <section class="v-card">
+        <div class="field">
+          <label for="serverSeed">Server seed <span class="v-hint">revealed on rotation</span></label>
+          <input id="serverSeed" class="mono" autocomplete="off" spellcheck="false" placeholder="64 hex characters" />
+        </div>
+        <div class="field">
+          <label for="clientSeed">Client seed <span class="v-hint">yours</span></label>
+          <input id="clientSeed" class="mono" autocomplete="off" spellcheck="false" />
+        </div>
+        <div class="field">
+          <label for="nonce">Nonce <span class="v-hint">the hole number</span></label>
+          <input id="nonce" class="mono" inputmode="numeric" autocomplete="off" value="1" />
+        </div>
+        <div class="field">
+          <label for="expectHash">
+            Published server seed hash <span class="v-hint">optional — proves the seed is the committed one</span>
+          </label>
+          <input id="expectHash" class="mono" autocomplete="off" spellcheck="false" placeholder="sha256 hex" />
+        </div>
+        <button class="action" id="run">Verify</button>
+      </section>
+
+      <section class="v-card v-result" id="result" hidden>
+        <div class="v-carry mono" id="out-carry">—</div>
+        <div class="v-yards mono" id="out-yards">—</div>
+        <div id="out-commit" class="v-commit"></div>
+        <div class="kv"><div class="kv__k">HMAC-SHA256</div><div class="kv__v" id="out-hash"></div></div>
+        <div class="kv"><div class="kv__k">First 52 bits</div><div class="kv__v" id="out-h"></div></div>
+        <div class="kv"><div class="kv__k">Instant bust</div><div class="kv__v" id="out-bust"></div></div>
+        <div class="kv"><div class="kv__k">Capped</div><div class="kv__v" id="out-capped"></div></div>
+      </section>
+
+      <section class="v-card">
+        <h2 class="v-h2">Run a range</h2>
+        <p class="v-intro">
+          After a rotation you hold the plaintext for every hole you played under that seed. Check
+          them all at once.
+        </p>
+        <div class="field__row">
+          <input id="from" class="mono" inputmode="numeric" value="1" aria-label="From nonce" />
+          <input id="to" class="mono" inputmode="numeric" value="25" aria-label="To nonce" />
+          <button class="mini" id="run-range" style="min-width:76px">Run</button>
+        </div>
+        <div id="range-out" class="v-range"></div>
+      </section>
+
+      <section class="v-card">
+        <h2 class="v-h2">The whole algorithm</h2>
+        <pre class="v-code mono"><code>h = first 52 bits of HMAC_SHA256(serverSeed, clientSeed + ":" + nonce)
+
+if (h % 101 === 0)  carry = 1.00              // the house edge, 1 hole in 101
+else                carry = floor(100 * 2^52 / (2^52 - h)) / 100
+
+carry = min(carry, 10000)                     // hard cap, inside the derivation
+yards = carry * 100</code></pre>
+        <p class="v-intro">
+          P(carry ≥ m) = (1 − 1/101) / m for every m, so the return to player is
+          <strong>99.0099%</strong> whether you lay up at 1.01x or hold for 10,000x. The
+          <a href="/docs/math-evidence.md">math evidence file</a> demonstrates that over
+          100,000,000 simulated holes.
+        </p>
+      </section>
+
+      <footer class="v-foot mono">
+        ACE · verifier build <span id="build"></span> · no network, no storage, no analytics
+      </footer>
+    </main>
+    <script type="module" src="/src/verify.ts"></script>
+  </body>
+</html>

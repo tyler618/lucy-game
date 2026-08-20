@@ -1,0 +1,159 @@
+/* The verifier is a document, not a game. It gets its own, quieter layout. */
+body.verify {
+  overflow-y: auto;
+  user-select: text;
+  -webkit-user-select: text;
+}
+
+.v-wrap {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: calc(24px + env(safe-area-inset-top)) 18px calc(40px + env(safe-area-inset-bottom));
+  display: grid;
+  gap: 16px;
+}
+
+.v-head {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+}
+
+.v-back {
+  color: var(--brass);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  text-decoration: none;
+  margin-bottom: 8px;
+}
+
+.v-head h1 {
+  margin: 0;
+  font-size: 34px;
+}
+
+.v-sub {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.v-intro {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--card-dim);
+}
+
+.v-intro a,
+.v-code a {
+  color: var(--brass-lit);
+}
+
+.v-card {
+  background: var(--green);
+  border: 1px solid rgba(176, 141, 63, 0.18);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+  display: grid;
+  gap: 12px;
+}
+
+.v-h2 {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: 0.04em;
+}
+
+.v-hint {
+  color: var(--card-dim);
+  text-transform: none;
+  letter-spacing: 0.02em;
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+.v-result {
+  text-align: center;
+}
+
+.v-carry {
+  font-size: clamp(44px, 14vmin, 76px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--brass-lit);
+}
+
+.v-yards {
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  color: var(--brass);
+  text-transform: uppercase;
+}
+
+.v-commit {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.v-commit[data-ok='true'] {
+  color: #7fd8a0;
+  background: rgba(60, 140, 90, 0.12);
+  border: 1px solid rgba(60, 140, 90, 0.35);
+}
+
+.v-commit[data-ok='false'] {
+  color: var(--oxblood-lit);
+  background: rgba(124, 45, 45, 0.14);
+  border: 1px solid rgba(124, 45, 45, 0.5);
+}
+
+.v-result .kv {
+  text-align: left;
+}
+
+.v-code {
+  margin: 0;
+  padding: 12px;
+  border-radius: 10px;
+  background: var(--pine);
+  border: 1px solid rgba(233, 227, 211, 0.08);
+  font-size: 11px;
+  line-height: 1.7;
+  overflow-x: auto;
+  color: var(--card);
+}
+
+.v-range {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(86px, 1fr));
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.v-range span {
+  padding: 5px 6px;
+  border-radius: 6px;
+  background: rgba(35, 44, 39, 0.9);
+  color: var(--card-dim);
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.v-range span b {
+  color: var(--card);
+  font-weight: 600;
+}
+
+.v-foot {
+  font-size: 10px;
+  color: rgba(233, 227, 211, 0.35);
+  text-align: center;
+  letter-spacing: 0.08em;
+}

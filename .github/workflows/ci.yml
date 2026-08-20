@@ -1,0 +1,61 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+jobs:
+  verify:
+    name: Typecheck, test, math, build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      # The math is the product. A quick simulation runs on every push so a
+      # change to the derivation, the modulo or the cap fails here rather than
+      # in a certification lab. The committed evidence file is the 100M run;
+      # this is the tripwire.
+      - name: Math tripwire (1,000,000 holes)
+        run: npm run sim:quick
+
+      # The committed evidence describes a specific modulo and cap. If either
+      # constant moves, the evidence is stale and must be regenerated with a
+      # full 100M run before merge.
+      - name: Evidence matches the locked constants
+        run: |
+          node -e "
+            const e = require('./docs/math-evidence.json');
+            const c = require('./packages/core/dist/constants.js');
+            const fail = (m) => { console.error('::error::' + m); process.exit(1); };
+            if (e.houseEdgeModulo !== c.HOUSE_EDGE_MODULO) fail('Evidence modulo ' + e.houseEdgeModulo + ' != code ' + c.HOUSE_EDGE_MODULO + '. Re-run: npm run sim');
+            if (e.maxCarry !== c.MAX_CARRY) fail('Evidence cap ' + e.maxCarry + ' != code ' + c.MAX_CARRY + '. Re-run: npm run sim');
+            if (e.verdict !== 'PASS') fail('Committed evidence verdict is ' + e.verdict);
+            if (e.rounds < 100000000) fail('Committed evidence is only ' + e.rounds + ' holes; 100,000,000 required.');
+            console.log('evidence ok:', e.rounds.toLocaleString(), 'holes, RTP', (e.pooledRtp*100).toFixed(4) + '%');
+          "
+
+      - name: Build
+        run: npm run build
+
+      - name: Bundle budget
+        run: |
+          BYTES=$(find apps/web/dist -name '*.js' -o -name '*.css' | xargs cat | gzip -9 | wc -c)
+          echo "gzipped bundle: $BYTES bytes"
+          if [ "$BYTES" -gt 3145728 ]; then
+            echo "::error::Bundle is over the 3MB gzipped budget."
+            exit 1
+          fi

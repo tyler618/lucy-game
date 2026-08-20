@@ -1,0 +1,51 @@
+name: Ingest generated art
+
+# The art bundle is generated once and committed. This workflow is how it gets
+# from the generator's CDN into the repo, and how a revised asset is pulled in
+# later: update assets/manifest.json, run this, review the diff.
+on:
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Re-fetch assets that are already committed
+        type: boolean
+        default: false
+
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Fetch and optimise
+        run: node scripts/fetch-assets.mjs ${{ inputs.force && '--force' || '' }}
+
+      - name: Report sizes
+        run: |
+          echo '### Asset bundle' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          du -ah apps/web/public/assets | sort -h >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Commit
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/web/public/assets
+          if git diff --cached --quiet; then
+            echo "No asset changes."
+            exit 0
+          fi
+          git commit -m "chore(assets): ingest generated art from manifest"
+          git push origin HEAD:${{ github.ref_name }}

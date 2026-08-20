@@ -1,0 +1,15 @@
+{
+  "name": "ACE — Tee it up",
+  "short_name": "ACE",
+  "description": "Carry and cash out. Provably fair, 99.01% RTP, 10,000x max carry.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0E1210",
+  "theme_color": "#0E1210",
+  "categories": ["games"],
+  "icons": [
+    { "src": "/assets/art/emblem.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

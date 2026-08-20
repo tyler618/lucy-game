@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"
+    />
+    <meta name="theme-color" content="#0E1210" />
+    <meta name="color-scheme" content="dark" />
+    <title>ACE — Tee it up</title>
+    <meta name="description" content="ACE. Carry and cash out. Provably fair, 99.01% RTP, 10,000x max." />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/assets/art/emblem.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/assets/art/emblem.svg" />
+    <link
+      rel="preconnect"
+      href="https://fonts.gstatic.com"
+      crossorigin
+    />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,900&family=JetBrains+Mono:wght@400;600;800&display=swap"
+    />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!--
+      Layout contract, enforced in CSS and depended on by the whole design:
+      the flight surface owns the top of the screen where no thumb reaches, and
+      every control lives in the bottom third. `Mark it` is fixed in the grid so
+      it cannot move between states — a cash-out button that shifts under
+      pressure costs players money.
+    -->
+    <div id="app" class="app">
+      <header class="topbar" role="banner">
+        <button class="topbar__brand" id="btn-info" aria-label="Game info, RTP and rules">
+          <span class="wordmark">ACE</span>
+          <span class="topbar__tag">Provably fair</span>
+        </button>
+        <div class="topbar__right">
+          <button class="chip chip--clock" id="btn-session" aria-label="Session clock and net position">
+            <span class="chip__icon" data-icon="clock" aria-hidden="true"></span>
+            <span id="session-clock" class="mono">0:00</span>
+            <span id="session-net" class="mono chip__net">0.00</span>
+          </button>
+          <button class="chip" id="btn-sound" aria-label="Sound off" aria-pressed="false">
+            <span class="chip__icon" data-icon="sound" aria-hidden="true"></span>
+          </button>
+        </div>
+      </header>
+
+      <div class="strip" id="history-strip" role="list" aria-label="Last 30 carries"></div>
+
+      <main class="stage" id="stage" aria-live="off">
+        <canvas id="course" aria-hidden="true"></canvas>
+        <div class="readout" id="readout">
+          <div class="readout__carry mono" id="carry">1.00<span class="readout__x">x</span></div>
+          <div class="readout__yards mono" id="yards">100 YARDS</div>
+          <div class="readout__status" id="status">Tee it up</div>
+        </div>
+        <div class="splash" id="splash" aria-hidden="true"></div>
+      </main>
+
+      <div class="feed" id="feed" aria-label="Live bets" role="log"></div>
+
+      <section class="controls" id="controls">
+        <div class="tabs" role="tablist">
+          <button class="tab is-active" data-tab="manual" role="tab" aria-selected="true">Manual</button>
+          <button class="tab" data-tab="auto" role="tab" aria-selected="false">
+            <span class="chip__icon chip__icon--sm" data-icon="autobet" aria-hidden="true"></span>Autobet
+          </button>
+        </div>
+
+        <div class="panel" data-panel="manual">
+          <div class="field">
+            <label for="stake">Stake</label>
+            <div class="field__row">
+              <input
+                id="stake"
+                class="mono"
+                inputmode="decimal"
+                autocomplete="off"
+                value="10.00"
+                aria-describedby="balance-line"
+              />
+              <button class="mini" data-stake="half">½</button>
+              <button class="mini" data-stake="double">2×</button>
+              <button class="mini" data-stake="max">Max</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="layup">Lay-up at</label>
+            <div class="field__row">
+              <input id="layup" class="mono" inputmode="decimal" autocomplete="off" placeholder="off" />
+              <span class="field__suffix mono" id="layup-yards">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel is-hidden" data-panel="auto">
+          <div class="grid2">
+            <div class="field">
+              <label for="auto-rounds">Holes</label>
+              <input id="auto-rounds" class="mono" inputmode="numeric" value="0" placeholder="∞" />
+            </div>
+            <div class="field">
+              <label for="auto-layup">Lay-up at</label>
+              <input id="auto-layup" class="mono" inputmode="decimal" value="2.00" />
+            </div>
+            <div class="field">
+              <label for="auto-win">On win +%</label>
+              <input id="auto-win" class="mono" inputmode="decimal" value="0" />
+            </div>
+            <div class="field">
+              <label for="auto-loss">On loss +%</label>
+              <input id="auto-loss" class="mono" inputmode="decimal" value="100" />
+            </div>
+            <div class="field">
+              <label for="auto-profit">Stop on profit</label>
+              <input id="auto-profit" class="mono" inputmode="decimal" placeholder="off" />
+            </div>
+            <div class="field">
+              <label for="auto-lossstop">Stop on loss</label>
+              <input id="auto-lossstop" class="mono" inputmode="decimal" placeholder="off" />
+            </div>
+          </div>
+          <label class="check">
+            <input type="checkbox" id="auto-reset" checked />
+            <span>Reset stake on win</span>
+          </label>
+          <div class="auto-status mono" id="auto-status"></div>
+        </div>
+
+        <div class="balance" id="balance-line">
+          <span class="chip__icon chip__icon--sm" data-icon="wallet" aria-hidden="true"></span>
+          <span class="mono" id="balance">0.00</span>
+          <select id="currency" class="mono" aria-label="Currency"></select>
+        </div>
+
+        <!-- Fixed grid slot. This button never moves. -->
+        <button class="action" id="action" data-phase="betting">
+          <span class="action__label">Tee it up</span>
+          <span class="action__sub mono" id="action-sub"></span>
+        </button>
+
+        <nav class="drawerbar">
+          <button class="drawerbtn" data-drawer="fair">
+            <span class="chip__icon chip__icon--sm" data-icon="verified" aria-hidden="true"></span>Fairness
+          </button>
+          <button class="drawerbtn" data-drawer="race">
+            <span class="chip__icon chip__icon--sm" data-icon="leaderboard" aria-hidden="true"></span>Races
+          </button>
+          <button class="drawerbtn" data-drawer="rg">
+            <span class="chip__icon chip__icon--sm" data-icon="verified" aria-hidden="true"></span>Limits
+          </button>
+          <button class="drawerbtn" data-drawer="history">
+            <span class="chip__icon chip__icon--sm" data-icon="history" aria-hidden="true"></span>My holes
+          </button>
+        </nav>
+      </section>
+
+      <div class="drawer" id="drawer" hidden>
+        <div class="drawer__scrim" data-close></div>
+        <div class="drawer__sheet" role="dialog" aria-modal="true" aria-labelledby="drawer-title">
+          <div class="drawer__grab"></div>
+          <h2 id="drawer-title" class="drawer__title"></h2>
+          <div class="drawer__body" id="drawer-body"></div>
+          <button class="drawer__close" data-close>Close</button>
+        </div>
+      </div>
+
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
+
+    <noscript>
+      <p style="color: #e9e3d3; padding: 2rem; font-family: system-ui">
+        ACE needs JavaScript. The provably fair verifier at <a href="/verify">/verify</a> does too — but it runs
+        entirely in your browser and talks to nothing.
+      </p>
+    </noscript>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

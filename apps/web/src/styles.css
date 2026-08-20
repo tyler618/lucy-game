@@ -1,0 +1,835 @@
+/*
+ * ACE — visual system.
+ *
+ * Reference is a leather caddie yardage book and a brass yardage plate, not a
+ * Vegas floor. Serif for display numbers, monospace with tabular figures for
+ * every live figure so nothing on screen ever reflows as digits change.
+ */
+
+:root {
+  --pine: #0e1210;
+  --green: #1a211d;
+  --green-2: #232c27;
+  --card: #e9e3d3;
+  --card-dim: #a9a394;
+  --brass: #b08d3f;
+  --brass-lit: #d8b566;
+  --oxblood: #7c2d2d;
+  --oxblood-lit: #c25151;
+  --water: #26414c;
+
+  --radius: 14px;
+  --radius-lg: 20px;
+  --tap: 48px;
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+
+  --font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --beat: 800ms;
+}
+
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
+  background: var(--pine);
+  color: var(--card);
+  font-family: var(--font-display);
+  /* Portrait, one thumb. Pull-to-refresh mid-flight is a lost cash-out. */
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1, 'zero' 1;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- layout ---------- */
+
+.app {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr) auto auto;
+  height: 100dvh;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  position: relative;
+  overflow: hidden;
+}
+
+/* ---------- top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px 6px;
+  gap: 10px;
+}
+
+.topbar__brand {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  background: none;
+  border: 0;
+  padding: 4px 6px;
+  color: inherit;
+  cursor: pointer;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 26px;
+  letter-spacing: 0.14em;
+  line-height: 1;
+  color: var(--card);
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.6);
+}
+
+.topbar__tag {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--brass);
+}
+
+.topbar__right {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(176, 141, 63, 0.28);
+  background: rgba(26, 33, 29, 0.85);
+  color: var(--card);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.chip__net {
+  color: var(--card-dim);
+  font-size: 11px;
+}
+
+.chip__net[data-sign='up'] {
+  color: var(--brass-lit);
+}
+.chip__net[data-sign='down'] {
+  color: var(--oxblood-lit);
+}
+
+.chip__icon {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  background: var(--brass);
+  /*
+   * Icons are single-colour brass line art, so they are masked rather than
+   * loaded as <img>. That keeps them recolourable from the palette and means a
+   * missing file degrades to nothing rather than a broken-image glyph.
+   */
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  flex: none;
+}
+
+.chip__icon--sm {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- history strip ---------- */
+
+.strip {
+  display: flex;
+  gap: 5px;
+  padding: 2px 14px 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  mask-image: linear-gradient(90deg, #000 85%, transparent);
+}
+
+.strip::-webkit-scrollbar {
+  display: none;
+}
+
+.strip__chip {
+  flex: none;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: rgba(35, 44, 39, 0.9);
+  color: var(--card-dim);
+  animation: chip-in 260ms ease-out;
+}
+
+.strip__chip[data-band='low'] {
+  color: var(--oxblood-lit);
+  border-color: rgba(124, 45, 45, 0.5);
+}
+.strip__chip[data-band='mid'] {
+  color: var(--card);
+  border-color: rgba(233, 227, 211, 0.16);
+}
+.strip__chip[data-band='high'] {
+  color: var(--brass-lit);
+  border-color: rgba(176, 141, 63, 0.5);
+  background: rgba(176, 141, 63, 0.1);
+}
+.strip__chip[data-band='huge'] {
+  color: var(--pine);
+  background: var(--brass-lit);
+  border-color: var(--brass-lit);
+}
+
+@keyframes chip-in {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+}
+
+/* ---------- stage ---------- */
+
+.stage {
+  position: relative;
+  min-height: 0;
+  margin: 0 14px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 100%, #16201a 0%, var(--pine) 70%);
+  border: 1px solid rgba(176, 141, 63, 0.16);
+}
+
+#course {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.readout {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  gap: 2px;
+}
+
+/*
+ * The hero. Sized in vmin so it is enormous on a phone and still sane on a
+ * tablet, and given a fixed min-width in ch units so the box does not resize
+ * as the ball carries from 1.00x to 1000.00x.
+ */
+.readout__carry {
+  font-size: clamp(56px, 17vmin, 104px);
+  font-weight: 800;
+  line-height: 1;
+  color: var(--card);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.55);
+  min-width: 7ch;
+  text-align: center;
+  transition: color 120ms linear;
+}
+
+.readout__x {
+  font-size: 0.42em;
+  color: var(--brass);
+  margin-left: 0.06em;
+  vertical-align: baseline;
+}
+
+.readout__yards {
+  font-size: clamp(12px, 3.4vmin, 17px);
+  letter-spacing: 0.3em;
+  color: var(--brass);
+  text-transform: uppercase;
+}
+
+.readout__status {
+  margin-top: 10px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  color: var(--card-dim);
+  text-transform: uppercase;
+}
+
+.stage[data-phase='settled'][data-won='false'] .readout__carry {
+  color: var(--oxblood-lit);
+}
+
+.stage[data-phase='settled'][data-won='true'] .readout__carry {
+  color: var(--brass-lit);
+}
+
+.splash {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(60% 40% at 50% 72%, rgba(38, 65, 76, 0.9), transparent 70%);
+}
+
+.splash.is-on {
+  animation: splash var(--beat) ease-out;
+}
+
+@keyframes splash {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  22% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+/* ---------- live feed ---------- */
+
+.feed {
+  display: flex;
+  gap: 8px;
+  padding: 8px 14px 4px;
+  overflow: hidden;
+  height: 34px;
+  align-items: center;
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 88%, transparent);
+}
+
+.feed__item {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(26, 33, 29, 0.8);
+  border: 1px solid rgba(233, 227, 211, 0.07);
+  color: var(--card-dim);
+  animation: feed-in 300ms ease-out;
+}
+
+.feed__item[data-state='won'] {
+  color: var(--brass-lit);
+  border-color: rgba(176, 141, 63, 0.35);
+}
+.feed__item[data-state='lost'] {
+  color: rgba(194, 81, 81, 0.75);
+}
+
+.feed__sim {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  color: rgba(233, 227, 211, 0.35);
+  border: 1px solid rgba(233, 227, 211, 0.18);
+  border-radius: 3px;
+  padding: 0 3px;
+}
+
+@keyframes feed-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* ---------- controls: the bottom third ---------- */
+
+.controls {
+  padding: 6px 14px calc(10px + var(--safe-bottom));
+  display: grid;
+  gap: 8px;
+  background: linear-gradient(180deg, transparent, rgba(14, 18, 16, 0.9) 22%);
+}
+
+.tabs {
+  display: flex;
+  gap: 6px;
+}
+
+.tab {
+  flex: 1;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(233, 227, 211, 0.1);
+  background: rgba(26, 33, 29, 0.7);
+  color: var(--card-dim);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.tab.is-active {
+  color: var(--card);
+  border-color: rgba(176, 141, 63, 0.5);
+  background: rgba(176, 141, 63, 0.12);
+}
+
+.panel {
+  display: grid;
+  gap: 8px;
+}
+
+.panel.is-hidden {
+  display: none;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.field {
+  display: grid;
+  gap: 3px;
+}
+
+.field label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--card-dim);
+}
+
+.field__row {
+  display: flex;
+  gap: 6px;
+  align-items: stretch;
+}
+
+.field input,
+.balance select {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap);
+  border-radius: 10px;
+  border: 1px solid rgba(233, 227, 211, 0.12);
+  background: var(--green);
+  color: var(--card);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 16px; /* 16px or iOS zooms the whole board on focus. */
+  padding: 0 12px;
+  outline: none;
+}
+
+.field input:focus,
+.balance select:focus {
+  border-color: var(--brass);
+}
+
+.field__suffix {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  color: var(--brass);
+  min-width: 5ch;
+}
+
+.mini {
+  min-width: 44px;
+  min-height: var(--tap);
+  border-radius: 10px;
+  border: 1px solid rgba(233, 227, 211, 0.12);
+  background: var(--green);
+  color: var(--card-dim);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.mini:active {
+  background: var(--green-2);
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--card-dim);
+  min-height: 32px;
+}
+
+.auto-status {
+  font-size: 10px;
+  color: var(--brass);
+  min-height: 12px;
+  letter-spacing: 0.06em;
+}
+
+.balance {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.balance select {
+  flex: 0 0 auto;
+  min-height: 34px;
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+#balance {
+  flex: 1;
+  font-size: 15px;
+  color: var(--card);
+}
+
+/*
+ * Mark it. The largest element on screen, minimum 64px, and pinned in the grid
+ * so it occupies exactly the same rectangle in every phase.
+ */
+.action {
+  min-height: 68px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: var(--brass);
+  color: var(--pine);
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 21px;
+  letter-spacing: 0.06em;
+  display: grid;
+  place-items: center;
+  gap: 1px;
+  cursor: pointer;
+  transition: background 140ms ease, transform 90ms ease;
+}
+
+.action:active {
+  transform: translateY(1px);
+}
+
+.action__sub {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  opacity: 0.75;
+}
+
+.action[data-phase='in_flight'] {
+  background: var(--brass-lit);
+  box-shadow: 0 0 0 2px rgba(216, 181, 102, 0.22), 0 8px 30px rgba(176, 141, 63, 0.25);
+}
+
+.action[data-phase='settled'] {
+  background: var(--green-2);
+  color: var(--card-dim);
+}
+
+.action:disabled {
+  background: var(--green-2);
+  color: rgba(233, 227, 211, 0.35);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.drawerbar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.drawerbtn {
+  min-height: 40px;
+  border-radius: 10px;
+  border: 1px solid rgba(233, 227, 211, 0.08);
+  background: rgba(26, 33, 29, 0.6);
+  color: var(--card-dim);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+}
+
+/* ---------- drawer ---------- */
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+
+.drawer__scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 8, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.drawer__sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  max-height: 82dvh;
+  display: flex;
+  flex-direction: column;
+  background: var(--green);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+  border-top: 1px solid rgba(176, 141, 63, 0.3);
+  padding: 8px 16px calc(16px + var(--safe-bottom));
+  animation: sheet-up 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+
+.drawer__grab {
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(233, 227, 211, 0.2);
+  margin: 4px auto 10px;
+}
+
+.drawer__title {
+  margin: 0 0 10px;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+}
+
+.drawer__body {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--card-dim);
+}
+
+.drawer__body h3 {
+  color: var(--card);
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 16px 0 6px;
+}
+
+.drawer__body a {
+  color: var(--brass-lit);
+}
+
+.drawer__body code,
+.kv__v {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  word-break: break-all;
+  color: var(--card);
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 4px 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid rgba(233, 227, 211, 0.07);
+}
+
+.kv__k {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--card-dim);
+}
+
+.drawer__close {
+  margin-top: 12px;
+  min-height: var(--tap);
+  border-radius: 10px;
+  border: 1px solid rgba(233, 227, 211, 0.14);
+  background: transparent;
+  color: var(--card);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.rgbtn {
+  width: 100%;
+  min-height: var(--tap);
+  margin-top: 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 45, 45, 0.6);
+  background: rgba(124, 45, 45, 0.16);
+  color: var(--oxblood-lit);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid rgba(233, 227, 211, 0.06);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.row__rank {
+  color: var(--brass);
+  min-width: 2.5ch;
+}
+
+/* ---------- toast ---------- */
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(96px + var(--safe-bottom));
+  transform: translateX(-50%) translateY(10px);
+  background: var(--green-2);
+  border: 1px solid rgba(176, 141, 63, 0.4);
+  color: var(--card);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  max-width: 88vw;
+  text-align: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 180ms ease, transform 180ms ease;
+  z-index: 50;
+}
+
+.toast.is-on {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast[data-kind='block'] {
+  border-color: rgba(124, 45, 45, 0.7);
+  color: var(--oxblood-lit);
+}
+
+/* ---------- reduced motion ---------- */
+
+/*
+ * A flattened path, not a disabled one. Carry still has to read clearly: the
+ * number keeps counting, the ball still travels, and only the flourishes stop.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+  }
+
+  .splash.is-on {
+    animation: none;
+    opacity: 0.85;
+  }
+}
+
+@media (max-height: 680px) {
+  .readout__carry {
+    font-size: clamp(46px, 14vmin, 76px);
+  }
+  .feed {
+    height: 28px;
+  }
+  .action {
+    min-height: 64px;
+    font-size: 19px;
+  }
+}
+
+/* ---------- icon masks ---------- */
+/*
+ * Generated art, masked to the brass so a single SVG works on any background
+ * and inherits the palette. Declared here rather than inline so a missing
+ * asset degrades to an empty box instead of a broken-image glyph.
+ */
+[data-icon='tee'] { -webkit-mask-image: url('/assets/icons/tee.svg'); mask-image: url('/assets/icons/tee.svg'); }
+[data-icon='pin'] { -webkit-mask-image: url('/assets/icons/pin.svg'); mask-image: url('/assets/icons/pin.svg'); }
+[data-icon='water'] { -webkit-mask-image: url('/assets/icons/water.svg'); mask-image: url('/assets/icons/water.svg'); }
+[data-icon='ball'] { -webkit-mask-image: url('/assets/icons/ball.svg'); mask-image: url('/assets/icons/ball.svg'); }
+[data-icon='trophy'] { -webkit-mask-image: url('/assets/icons/trophy.svg'); mask-image: url('/assets/icons/trophy.svg'); }
+[data-icon='verified'] { -webkit-mask-image: url('/assets/icons/verified.svg'); mask-image: url('/assets/icons/verified.svg'); }
+[data-icon='history'] { -webkit-mask-image: url('/assets/icons/history.svg'); mask-image: url('/assets/icons/history.svg'); }
+[data-icon='autobet'] { -webkit-mask-image: url('/assets/icons/autobet.svg'); mask-image: url('/assets/icons/autobet.svg'); }
+[data-icon='leaderboard'] { -webkit-mask-image: url('/assets/icons/leaderboard.svg'); mask-image: url('/assets/icons/leaderboard.svg'); }
+[data-icon='wallet'] { -webkit-mask-image: url('/assets/icons/wallet.svg'); mask-image: url('/assets/icons/wallet.svg'); }
+[data-icon='clock'] { -webkit-mask-image: url('/assets/icons/clock.svg'); mask-image: url('/assets/icons/clock.svg'); }
+[data-icon='sound'] { -webkit-mask-image: url('/assets/icons/sound.svg'); mask-image: url('/assets/icons/sound.svg'); }
