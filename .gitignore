@@ -8,3 +8,5 @@ dist/
 coverage/
 apps/web/public/assets/raw/
 *.tsbuildinfo
+.apibuild/
+*.tmp.mjs

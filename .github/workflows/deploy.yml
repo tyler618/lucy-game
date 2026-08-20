@@ -15,9 +15,8 @@ jobs:
   deploy:
     name: Build and deploy
     runs-on: ubuntu-latest
-    # Skips cleanly rather than failing red when the Vercel secrets are not set
-    # yet, so the rest of CI stays meaningful until they are.
-    if: ${{ github.event_name == 'workflow_dispatch' || github.ref_name != '' }}
+    # Every step below is guarded on the credentials check, so this job skips
+    # cleanly rather than failing red until the Vercel secrets are configured.
     steps:
       - uses: actions/checkout@v4
 

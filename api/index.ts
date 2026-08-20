@@ -37,8 +37,12 @@ interface Req extends IncomingMessage {
 }
 
 const DEMO_CURRENCY = 'USDT';
-/** Comfortably inside Vercel's function ceiling, and longer than any hole. */
-const AWAIT_TIMEOUT_MS = 25_000;
+/**
+ * Long-poll budget, kept well inside the function's maxDuration so a timeout
+ * comes back as a clean 504 the client retries rather than a hard 500. A hole
+ * that outlives one poll (anything past ~20s of carry) simply spans several.
+ */
+const AWAIT_TIMEOUT_MS = 20_000;
 
 function send(res: ServerResponse, status: number, body: unknown): void {
   const payload = JSON.stringify(body, (_k, v) => (typeof v === 'bigint' ? v.toString() : v));
