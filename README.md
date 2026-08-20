@@ -112,8 +112,13 @@ node scripts/fetch-assets.mjs        # materialise into apps/web/public/assets
 
 ## Deploying
 
-Push to `main` or the feature branch and the **Deploy to Vercel** workflow
-builds and ships it. It needs three repository secrets
+The repository is linked to the Vercel project **`ace-golf-crash`**
+(team `tyler-7404s-projects`). Every push builds: the production branch
+publishes to the production URL, and any other branch gets its own preview URL.
+No secrets are needed for that path — the git integration owns it.
+
+The **Deploy to Vercel** workflow is the alternative, for deploying from CI
+rather than from the git integration. It needs three repository secrets
 (*Settings → Secrets and variables → Actions*):
 
 | Secret | Where to get it |
