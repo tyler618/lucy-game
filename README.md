@@ -12,6 +12,9 @@ you keep the carry. Wait too long and it is in the drink.
 99.0099% RTP · flat at every cash-out target · 10,000x max carry · 1 in 101 instant bust
 ```
 
+**Play it:** https://ace-golf-crash-git-claude-ace-maste-bb3a9e-tyler-7404s-projects.vercel.app
+· **Verify it:** [`/verify`](https://ace-golf-crash-git-claude-ace-maste-bb3a9e-tyler-7404s-projects.vercel.app/verify)
+
 - **Table** — `/`
 - **Verifier** — `/verify` (pure client-side, works offline)
 - **Math evidence** — [`docs/math-evidence.md`](docs/math-evidence.md) — 100,000,000 simulated holes
@@ -116,6 +119,11 @@ The repository is linked to the Vercel project **`ace-golf-crash`**
 (team `tyler-7404s-projects`). Every push builds: the production branch
 publishes to the production URL, and any other branch gets its own preview URL.
 No secrets are needed for that path — the git integration owns it.
+
+Vercel's production branch is `main`, and this build lives on
+`claude/ace-master-build-fwo2m8`, so the live URL above is the branch alias —
+stable, and it tracks the tip of the branch. Merging the branch into `main`
+makes `ace-golf-crash.vercel.app` serve it instead.
 
 The **Deploy to Vercel** workflow is the alternative, for deploying from CI
 rather than from the git integration. It needs three repository secrets
