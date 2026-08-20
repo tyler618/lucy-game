@@ -95,6 +95,10 @@ export default async function handler(req: Req, res: ServerResponse): Promise<vo
           latencyGraceMs: 200,
           currencies: Object.values(CURRENCIES),
           blockedJurisdictions: geo.list(),
+          geoNote:
+            'Demo build: sanctions jurisdictions are blocked. Licensed-market restrictions do not ' +
+            'apply to a play-money demo and are lifted here; a real-money deployment restores them ' +
+            'from server config.',
           evidence: 'https://github.com/tyler618/lucy-game/blob/main/docs/math-evidence.md',
           verifier: '/verify',
           demo: true,

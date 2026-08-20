@@ -214,9 +214,25 @@ export class HttpTransport extends BaseTransport {
 
   async connect(): Promise<void> {
     const stored = sessionStorage.getItem('ace.session');
-    const s = await this.call<SessionState & { token: string; serverTime: number }>('/session', {
-      token: stored ?? null,
+    const res = await fetch(`${this.base}/session`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...(stored ? { 'x-ace-session': stored } : {}) },
+      body: JSON.stringify({ token: stored ?? null }),
     });
+
+    if (res.status === 451) {
+      // Geo refusal. Tell the player plainly rather than leaving a dead table
+      // on screen — the block is the answer, so it has to be legible.
+      const body = (await res.json().catch(() => ({}))) as { jurisdiction?: string };
+      this.emit('rejected', {
+        reason: 'jurisdiction_blocked',
+        message: `ACE is not available in ${body.jurisdiction ?? 'your region'}.`,
+      });
+      this.emit('status', { online: false, detail: 'blocked' });
+      return;
+    }
+    if (!res.ok) throw new Error(`/session -> ${res.status}`);
+    const s = (await res.json()) as SessionState & { token: string; serverTime: number };
     this.token = s.token;
     // Session token only. There is deliberately no balance, seed or outcome in
     // client storage — the anti-goal list says balance never lives here, and a

@@ -161,7 +161,14 @@ transport.on('session', (s) => {
 });
 
 transport.on('status', ({ online, detail }) => {
-  if (!online) toast(detail === 'reconnecting' ? 'Reconnecting to the table…' : 'Offline', 'block');
+  if (online) return;
+  if (detail === 'blocked') {
+    // Nothing to reconnect to; the refusal already went out as a rejection.
+    statusEl.textContent = 'Unavailable in your region';
+    actionEl.disabled = true;
+    return;
+  }
+  toast(detail === 'reconnecting' ? 'Reconnecting to the table…' : 'Offline', 'block');
 });
 
 transport.on('teeoff', ({ betId, teedOffAt: at }) => {
@@ -485,7 +492,13 @@ async function boot(): Promise<void> {
     /* the panel degrades to em-dashes rather than blocking play */
   }
 
-  await transport.connect();
+  try {
+    await transport.connect();
+  } catch (err) {
+    statusEl.textContent = 'Table unavailable';
+    toast('Could not reach the table. Reload to try again.', 'block');
+    throw err;
+  }
 
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
     navigator.serviceWorker.register('/sw.js').catch(() => {});

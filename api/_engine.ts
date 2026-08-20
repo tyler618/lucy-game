@@ -39,7 +39,30 @@ const SESSION_SECRET = process.env.ACE_SESSION_SECRET ?? randomBytes(32).toStrin
 export const audit = new AuditLog(new MemorySink(5_000));
 export const wallet = new DemoWallet();
 export const rg = new DemoRgProvider();
-export const geo = new ConfigGeoProvider();
+/**
+ * Geo for the hosted demo.
+ *
+ * The production default deny list blocks two very different things: markets
+ * that are closed to unlicensed real-money remote gaming (US, FR, NL, AU, SG),
+ * and the sanctions set. This build takes no deposits, holds no real balance
+ * and pays out nothing, so the licensing half does not apply to it — and
+ * leaving it in place would mean the demo refuses to open for most of the
+ * people it exists to show the game to.
+ *
+ * The sanctions half is not about gaming licences and stays enforced.
+ *
+ * What is NOT weakened: the geo check still runs on every session and every
+ * bet, through the same GeoProvider the production server uses. Only the list
+ * differs, which is exactly what "blocklist from server config, not client
+ * checks" is for. A real-money deployment sets ACE_BLOCKED_JURISDICTIONS (or
+ * swaps the provider) and gets the full list back.
+ */
+const DEMO_SANCTIONS_ONLY = ['KP', 'IR', 'SY', 'CU', 'RU', 'BY', 'MM', 'AF'];
+export const geo = new ConfigGeoProvider(
+  process.env.ACE_BLOCKED_JURISDICTIONS
+    ? process.env.ACE_BLOCKED_JURISDICTIONS.split(',').map((c) => c.trim()).filter(Boolean)
+    : DEMO_SANCTIONS_ONLY,
+);
 export const seeds = new SeedManager();
 export const feed = new LiveFeed(60);
 
